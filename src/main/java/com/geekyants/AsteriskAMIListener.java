@@ -1,22 +1,28 @@
 package com.geekyants;
 
+import com.geekyants.entity.PacketSsrc;
+import com.geekyants.repository.PacketSsrcRepository;
 import jakarta.annotation.PostConstruct;
 import org.asteriskjava.manager.AuthenticationFailedException;
 import org.asteriskjava.manager.DefaultManagerConnection;
 import org.asteriskjava.manager.ManagerConnection;
 import org.asteriskjava.manager.action.EventsAction;
+import org.asteriskjava.manager.event.HangupEvent;
 import org.asteriskjava.manager.event.RtcpReceivedEvent;
 import org.asteriskjava.manager.event.RtcpSentEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 
 @Component
 public class AsteriskAMIListener {
 
     @Autowired
-    private SsrcService service;
+    private PacketSsrcRepository packetSsrcRepository;
+
+    public String ssrcValue;
 
     @PostConstruct
     void main()
@@ -34,7 +40,7 @@ public class AsteriskAMIListener {
 //                System.out.println("*");
 //                System.out.println("*");
 //                System.out.println("Received event: " + event);
-                if(event instanceof RtcpSentEvent) {
+                if (event instanceof RtcpSentEvent) {
                     System.out.println("********************************************");
                     System.out.println("RtcpSentEvent");
                     System.out.println("toAddress : " + ((RtcpSentEvent) event).getToAddress());
@@ -42,8 +48,7 @@ public class AsteriskAMIListener {
                     System.out.println("ssrc" + ((RtcpSentEvent) event).getSsrc());
                     System.out.println("report0Sourcessrc" + ((RtcpSentEvent) event).getReport0Sourcessrc());
                     System.out.println("********************************************");
-                }
-                else if(event instanceof RtcpReceivedEvent){
+                } else if (event instanceof RtcpReceivedEvent) {
                     System.out.println("********************************************");
                     System.out.println("RtcpReceivedEvent");
                     System.out.println("toAddress : " + ((RtcpReceivedEvent) event).getToAddress());
@@ -54,12 +59,18 @@ public class AsteriskAMIListener {
                     System.out.println("report0Sourcessrc : " + rtcpReceivedEventReport0Sourcessrc);
                     System.out.println("********************************************");
 
-                    if(rtcpReceivedEventSsrc.equals(rtcpReceivedEventReport0Sourcessrc)) {
-                        service.getSsrcList().add(rtcpReceivedEventSsrc);
+                    if (rtcpReceivedEventSsrc.equals(rtcpReceivedEventReport0Sourcessrc)) {
+                        ssrcValue = rtcpReceivedEventSsrc;
                     }
                 }
             });
-            Thread.sleep(Long.MAX_VALUE);
+            Thread.sleep(120000);
+            if(ssrcValue != null && !ssrcValue.isEmpty()) {
+                System.out.println("ssrcValue : " + ssrcValue);
+                PacketSsrc packetSsrc = new PacketSsrc();
+                packetSsrc.setSsrcValue(ssrcValue);
+                packetSsrcRepository.save(packetSsrc);
+            }
         } catch (AuthenticationFailedException e) {
             e.printStackTrace();
         } finally {
