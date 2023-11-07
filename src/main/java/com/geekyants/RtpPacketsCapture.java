@@ -1,9 +1,9 @@
 package com.geekyants;
 
-import jakarta.annotation.PostConstruct;
 import org.pcap4j.core.*;
 import org.pcap4j.packet.Packet;
 import org.pcap4j.util.NifSelector;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -12,8 +12,10 @@ import java.util.Arrays;
 @Component
 public class RtpPacketsCapture {
 
-    @PostConstruct
-    public void captureRtpPackets() throws PcapNativeException, NotOpenException {
+    @Autowired
+    private AudioUtil audioUtil;
+
+    public void captureRtpPackets(String ssrcValue) throws PcapNativeException, NotOpenException {
         System.out.println("Capturing RTP packets");
         PcapNetworkInterface device = getNetworkDevice();
         System.out.println("You chose: " + device);
@@ -69,6 +71,8 @@ public class RtpPacketsCapture {
         System.out.println("Packets received: " + stats.getNumPacketsReceived());
         System.out.println("Packets dropped: " + stats.getNumPacketsDropped());
         System.out.println("Packets dropped by interface: " + stats.getNumPacketsDroppedByIf());
+
+        audioUtil.convertPcapToRtpFile(ssrcValue);
 
         // Cleanup when complete
         dumper.close();

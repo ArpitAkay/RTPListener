@@ -8,6 +8,8 @@ import org.asteriskjava.manager.action.EventsAction;
 import org.asteriskjava.manager.event.HoldEvent;
 import org.asteriskjava.manager.event.RtcpReceivedEvent;
 import org.asteriskjava.manager.event.RtcpSentEvent;
+import org.pcap4j.core.NotOpenException;
+import org.pcap4j.core.PcapNativeException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -15,9 +17,9 @@ import java.io.IOException;
 
 @Component
 public class AsteriskAMIListener {
-    
+
     @Autowired
-    private AudioUtil audioUtil;
+    private RtpPacketsCapture packetsCapture;
 
     private static String ssrcValue;
 
@@ -60,11 +62,13 @@ public class AsteriskAMIListener {
                     if(rtcpReceivedEventSsrc.equals(rtcpReceivedEventReport0Sourcessrc)) {
                         ssrcValue = rtcpReceivedEventSsrc;
                         System.out.println("Value : " + ssrcValue);
+                        try {
+                            packetsCapture.captureRtpPackets(ssrcValue);
+                        } catch (PcapNativeException | NotOpenException e) {
+                            throw new RuntimeException(e);
+                        }
+                        Thread.currentThread().interrupt();
                     }
-                }
-                else if(event instanceof HoldEvent) {
-                    System.out.println("ssrcValue in holdevent " + ssrcValue);
-                    audioUtil.convertPcapToRtpFile(ssrcValue);
                 }
             });
             Thread.sleep(Long.MAX_VALUE);
