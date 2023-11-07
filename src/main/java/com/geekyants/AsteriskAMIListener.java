@@ -5,11 +5,8 @@ import org.asteriskjava.manager.AuthenticationFailedException;
 import org.asteriskjava.manager.DefaultManagerConnection;
 import org.asteriskjava.manager.ManagerConnection;
 import org.asteriskjava.manager.action.EventsAction;
-import org.asteriskjava.manager.event.HoldEvent;
 import org.asteriskjava.manager.event.RtcpReceivedEvent;
 import org.asteriskjava.manager.event.RtcpSentEvent;
-import org.pcap4j.core.NotOpenException;
-import org.pcap4j.core.PcapNativeException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -19,9 +16,7 @@ import java.io.IOException;
 public class AsteriskAMIListener {
 
     @Autowired
-    private RtpPacketsCapture packetsCapture;
-
-    private static String ssrcValue;
+    private SsrcService service;
 
     @PostConstruct
     void main()
@@ -60,14 +55,7 @@ public class AsteriskAMIListener {
                     System.out.println("********************************************");
 
                     if(rtcpReceivedEventSsrc.equals(rtcpReceivedEventReport0Sourcessrc)) {
-                        ssrcValue = rtcpReceivedEventSsrc;
-                        System.out.println("Value : " + ssrcValue);
-                        try {
-                            packetsCapture.captureRtpPackets(ssrcValue);
-                        } catch (PcapNativeException | NotOpenException e) {
-                            throw new RuntimeException(e);
-                        }
-                        Thread.currentThread().interrupt();
+                        service.getSsrcList().add(rtcpReceivedEventSsrc);
                     }
                 }
             });
