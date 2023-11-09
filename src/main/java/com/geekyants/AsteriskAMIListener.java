@@ -8,6 +8,7 @@ import org.asteriskjava.manager.DefaultManagerConnection;
 import org.asteriskjava.manager.ManagerConnection;
 import org.asteriskjava.manager.action.EventsAction;
 import org.asteriskjava.manager.event.DtmfBeginEvent;
+import org.asteriskjava.manager.event.HangupEvent;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -50,6 +51,9 @@ public class AsteriskAMIListener {
                         dtmfEventRequestList.get(0).setHash(true);
                         dtmfEventRequestRepository.save(dtmfEventRequestList.get(0));
                     }
+                }
+                else if (event instanceof HangupEvent) {
+                    dtmfEventRequestRepository.deleteAll();
                 }
             });
         } catch (AuthenticationFailedException e) {
